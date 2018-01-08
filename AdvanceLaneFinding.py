@@ -13,7 +13,7 @@ class Line():
         self.avg_fit = np.empty(3) # weighted average of recent_fit entries
         self.num_reset = 0 # number of times reset called to switch back to sliding window
         self.curve_radius = 0.0 # radius of curvature
-        self.camera_ditance = 0.0 # Distance from camera
+        self.camera_distance = 0.0 # Distance from camera
         self.debug = debug # Save frames for debugging later
         self.color_line = None # Debug image showing colored line pixels with previous frames included
         self.window_width = 50 # Convoluation window width
@@ -216,6 +216,8 @@ class LaneDetector():
     def __init__(self, n_frames=10, debug = False):
         self.left_line = Line(left=True, n_frames=n_frames, debug=True) # Left line
         self.right_line = Line(left=False, n_frames=n_frames, debug=True) # Right line
+        self.left_fit = None # Left fit for last frame
+        self.right_fit = None # Right fit for last frame
         self.avg_width = 0.0 # Average width of the lane
         self.undist_img = None # undistorted image
         self.warped_img = None # warped image
@@ -458,7 +460,10 @@ class LaneDetector():
 
             break
 
-        return left_fit, right_fit
+        if left_fit is not None:
+            self.left_fit = left_fit
+        if right_fit is not None:
+            self.right_fit = right_fit
  
     def add_metrics(self, img):
         curve_radius = self.get_curve_radius()
@@ -473,11 +478,11 @@ class LaneDetector():
         width_text = "Average Width: {:.2f}".format(self.avg_width)
         
         cv2.putText(img, curvature_text, (10, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                    1.5, color=(255,255,255), thickness=3)
+                    1.5, color=(255,255,255), thickness=2)
         cv2.putText(img, center_text, (10, 100), cv2.FONT_HERSHEY_SIMPLEX,
-                    1.5, color=(255,255,255), thickness=3)
+                    1.5, color=(255,255,255), thickness=2)
         cv2.putText(img, width_text, (10, 150), cv2.FONT_HERSHEY_SIMPLEX,
-                    1.5, color=(255,255,255), thickness=3)
+                    1.5, color=(255,255,255), thickness=2)
         
         return img
     
@@ -488,34 +493,60 @@ class LaneDetector():
         color_lines = cv2.addWeighted(left_line, 1, right_line, 1, 0)
         return color_lines
     
+    # Returns unwaped line polynomial for left or right line with some margin around
+    def get_unwarped_line_fit(self, left=True, margin=10):
+        if left == True:
+            fit = self.left_fit
+            margin = -margin
+        else:
+            fit = self.right_fit
+        
+        if fit is None:
+            return None
+        
+        # Fit last detected lane's polynomial
+        yrange = np.arange(0, self.warped_img.shape[0]).astype(np.int32)
+        fitx = np.int32(fit[0]*yrange**2 + fit[1]*yrange + fit[2] + margin)
+        
+        # create a mask for the fitted points
+        mask = np.zeros_like(self.warped_img)
+        mask[yrange, fitx] = 255
+        
+        # Unwarp mask and fit polynomial again in unwarped space
+        unwarped_mask = cv2.warpPerspective(mask, self.Minv, self.undist_img.shape[1::-1])
+        nonzero = unwarped_mask.nonzero()
+        unwarped_fit = np.polyfit(nonzero[0], nonzero[1], 2)
+        
+        return unwarped_fit
+    
     def get_marked_lane(self):
-        left_fit, right_fit = self.get_lane_fit()
+        self.get_lane_fit()
 
         # If there is no center fit detected, return the undistornted image
-        if left_fit is None:
-            assert(right_fit is None)
+        if self.left_fit is None:
+            assert(self.right_fit is None)
             self.num_miss += 1
             return self.undist_img
         
         yrange = np.linspace(0, self.warped_img.shape[0]-1, num=self.warped_img.shape[0])
-        left_fitx = left_fit[0]*yrange**2 + left_fit[1]*yrange + left_fit[2]
-        right_fitx = right_fit[0]*yrange**2 + right_fit[1]*yrange + right_fit[2]
+        left_fitx = self.left_fit[0]*yrange**2 + self.left_fit[1]*yrange + self.left_fit[2]
+        right_fitx = self.right_fit[0]*yrange**2 + self.right_fit[1]*yrange + self.right_fit[2]
 
         left_points = np.array([np.transpose(np.vstack([left_fitx, yrange]))], dtype=np.int_)
         right_points = np.array([np.flipud(np.transpose(np.vstack([right_fitx, yrange])))], dtype=np.int_)
+        
         lane_poly = np.int_(np.hstack((left_points, right_points)))
-
         lane_mask = np.dstack((np.zeros_like(self.warped_img),)*3).astype(np.uint8)
         cv2.fillPoly(lane_mask, [lane_poly], (0,255,0))
         cv2.polylines(lane_mask, [left_points], False, (255, 255, 0), thickness=20)
         cv2.polylines(lane_mask, [right_points], False, (255, 255, 0), thickness=20)
     
-        unwarped_mask = cv2.warpPerspective(lane_mask, self.Minv, self.undist_img.shape[1::-1])
-        unwarped_img = cv2.addWeighted(self.undist_img, 1, unwarped_mask, 0.3, 0)
-        
+        unwarped_lane_mask = cv2.warpPerspective(lane_mask, self.Minv, self.undist_img.shape[1::-1])
+        unwarped_img = cv2.addWeighted(self.undist_img, 1, unwarped_lane_mask, 0.3, 0)
+
         if self.debug == True:
             color_lines = self.get_color_lines()
-            color_lines = cv2.resize(color_lines, (0,0), fx=0.35, fy=0.35) 
+            color_lines = cv2.resize(color_lines, (0,0), fx=0.15, fy=0.15) 
             unwarped_img[:color_lines.shape[0], unwarped_img.shape[1]-color_lines.shape[1]:] = color_lines
         
         output = self.add_metrics(unwarped_img)
