@@ -1,8 +1,3 @@
-## Writeup Template
-### You can use this file as a template for your writeup if you want to submit it as a markdown file, but feel free to use some other method and submit a pdf if you prefer.
-
----
-
 **Vehicle Detection Project**
 
 The goals / steps of this project are the following:
@@ -23,6 +18,20 @@ The goals / steps of this project are the following:
 [image6]: ./examples/labels_map.png
 [image7]: ./examples/output_bboxes.png
 [video1]: ./project_video.mp4
+[CarNotCar]: ./examples/car_not_car_examples.png
+[FinalOutput]: ./examples/FinalOutput.png
+[GammaCorrection]: ./examples/GammaCorrection.png
+[HOGFeatures]: ./examples/HOG_feature.png
+[HeatmapLabelBox]: ./examples/HeatmapLabelBox.png
+[HeatmapLeftWall]: ./examples/HeatmapWithLeftWall.png
+[HistEqualGamma]: ./examples/HistogramEqualizationGammaCorrection.png
+[HogSubsample]: ./examples/HogSubsamplingSearchOutput.png
+[Darkness]: ./examples/MeanPixelValue.png
+[Normalization]: ./examples/Normalization.png
+[SlidingWindowSearch]: ./examples/SlidingWindowSearchOutput.png
+[SlidingWindows]: ./examples/SlidingWindows.png
+[ProjectVideoOutput]: ./output_images/project_video.mp4
+[TestVideoOutput]: ./output_images/test_video.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
 ### Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -40,16 +49,16 @@ You're reading it!
 
 The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
 
-I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
+I started by reading in all the `vehicle` and `non-vehicle` images.  Here are some examples of the `vehicle` and `non-vehicle` classes:
 
-![alt text][image1]
+![CarNotCar]
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
 Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
 
-![alt text][image2]
+![HOGFeatures]
 
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
@@ -65,7 +74,7 @@ I trained a linear SVM using...
 
 I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
 
-![alt text][image3]
+![SlidingWindows]
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
@@ -77,7 +86,7 @@ Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spat
 ### Video Implementation
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](https://youtu.be/z_bSm2S1b2E)
 
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
