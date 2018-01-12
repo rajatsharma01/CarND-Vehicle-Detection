@@ -74,9 +74,11 @@ I trained a linear SVM using...
 
 #### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
+I have used 3 regions for sliding windows in y ranges of (390, 630), (400, 570) and (400, 520) with sliding window size of 96, 80, 64 respectively with an window overlap of 85%. *Sliding Window Search* section in project notebook (cells 17 and 18) implement this.  
 
 ![SlidingWindows]
+
+I have used HOG subsampling approach to optimize calculating HOG features only once for the whole search region. I have used 3 scales corresponding to above window sizes i.e. 1.5, 1.25 and 1.0. To increase overlap between windows, I have set `cells_per_step` to 1, which gives an overlap of 87.5%. *HOG Sub-sampling Window Search* (cell 19) implements this appoach.
 
 #### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
 
