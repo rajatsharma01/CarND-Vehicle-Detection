@@ -48,27 +48,44 @@ You're reading it!
 
 #### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
-
-I started by reading in all the `vehicle` and `non-vehicle` images.  Here are some examples of the `vehicle` and `non-vehicle` classes:
+The code for this step is contained in the 3rd code cell of the IPython notebook. I started by reading in all the `vehicle` and `non-vehicle` images.  Here are some examples of the `vehicle` and `non-vehicle` classes:
 
 ![Vehicle]
 ![NonVehicle]
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
-
+Here is an example using the `YCrCb` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
 ![HOGFeatures]
 
+More examples are present in output of the code cell 3 in notebook.
+
 #### 2. Explain how you settled on your final choice of HOG parameters.
 
-I tried various combinations of parameters and...
+I had experimented with HSV, HLS, YUV, LUV and YCrCb color spaces with different orientation and pixel_per_cell combinations and finally settled on following set of parameters which gave best test accuracy with SVM classifier:
+
+`
+# Parameters to extract features
+color_space = 'YCrCb'
+spatial_size=(16,16)
+hist_bins=32
+orient = 9
+pix_per_cell = 8
+cell_per_block = 2
+hog_channel = 'ALL'
+spatial_feature = True
+hist_feature = True
+hog_feature = True
+`
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
-I trained a linear SVM using...
+Code cell 4 has methods to extract color featues (histogram and spatial) and cell 5 has interface to go over set of images and extract combined hog and color features. Code cell 7 extracts features from training dataset [vehicle](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/vehicles.zip) and [non-vehicle](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/non-vehicles.zip) images. Each image is flipped horizontally as well to double the number of examples. Features are normalized using `sklearn.preprocessing.StandardScaler`. This is how features look like before and after normalization:
+
+![Normalization]
+
+Features are split in training and test data sets using `sklearn.model_selection.train_test_split` and fed into LinearSVM classifier in cell 11. Classifier achieves test accuracy of *98.7%*. I trained a linear SVM using
 
 ### Sliding Window Search
 
