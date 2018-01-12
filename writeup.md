@@ -1,4 +1,4 @@
-**Vehicle Detection Project**
+## Vehicle Detection Project
 
 The goals / steps of this project are the following:
 
@@ -18,7 +18,8 @@ The goals / steps of this project are the following:
 [image6]: ./examples/labels_map.png
 [image7]: ./examples/output_bboxes.png
 [video1]: ./project_video.mp4
-[CarNotCar]: ./examples/car_not_car_examples.png
+[Vehicle]: ./examples/VehicleExamples.png
+[NonVehicle]: ./examples/NonVehicleExamples.png
 [FinalOutput]: ./examples/FinalOutput.png
 [GammaCorrection]: ./examples/GammaCorrection.png
 [HOGFeatures]: ./examples/HOG_feature.png
@@ -51,7 +52,8 @@ The code for this step is contained in the first code cell of the IPython notebo
 
 I started by reading in all the `vehicle` and `non-vehicle` images.  Here are some examples of the `vehicle` and `non-vehicle` classes:
 
-![CarNotCar]
+![VehicleExamples]
+![NonVehicleExamples]
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
