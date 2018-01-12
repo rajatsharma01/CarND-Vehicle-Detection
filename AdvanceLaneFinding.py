@@ -219,7 +219,7 @@ class LaneDetector():
         self.left_fit = None # Left fit for last frame
         self.right_fit = None # Right fit for last frame
         self.avg_width = 0.0 # Average width of the lane
-        self.undist_img = None # undistorted image
+        self.input_img = None # input image
         self.warped_img = None # warped image
         self.Minv = None # inverted perspective trnasform matrix
         self.debug = debug
@@ -228,36 +228,6 @@ class LaneDetector():
         self.num_hits = 0 # number of frames with lane detected
         self.num_miss = 0 # number of frames with no lane detected
 
-        # Calibrate camera for undistorting images
-        self.calibrate_camera()
-
-    def calibrate_camera(self):
-        image_points = [] # 2d points in image fram
-        obj_points = [] # 3d points in real world
-        # Internal corner points dimensions in chessboard images
-        ny, nx = (6, 9)
-
-        # create 3d object points as all internal corner points in chesboard
-        objp = np.zeros((ny*nx, 3), np.float32)
-        objp[:,:2] = np.mgrid[0:nx,0:ny].T.reshape(-1,2)
-
-        # Read all calibration images and find corners
-        cal_images = sorted(glob.glob('./camera_cal/calibration*.jpg'))
-        for imfile in cal_images:
-            image = cv2.imread(imfile)
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            ret, corners = cv2.findChessboardCorners(gray, (nx, ny), None)
-            if ret == True:
-                image_points.append(corners)
-                obj_points.append(objp)
-
-        # Calibrate camera with image and object points
-        test_image = cv2.imread('./camera_cal/calibration1.jpg')
-
-        # Note that calibrateCamera accepts image_size as (width, height)
-        ret, self.cam_mtx, self.dist_coeff, rvecs, tvecs = \
-        cv2.calibrateCamera(obj_points, image_points, test_image.shape[1::-1], None, None)
- 
     def perspective_transform(self, img):
         xsize = img.shape[1]
         ysize = img.shape[0]
@@ -486,7 +456,7 @@ class LaneDetector():
         
         return img
     
-    def get_color_lines(self):
+    def get_debug_data(self):
         assert(self.debug == True)
         left_line = self.left_line.color_line
         right_line = self.right_line.color_line
@@ -513,7 +483,7 @@ class LaneDetector():
         mask[yrange, fitx] = 255
         
         # Unwarp mask and fit polynomial again in unwarped space
-        unwarped_mask = cv2.warpPerspective(mask, self.Minv, self.undist_img.shape[1::-1])
+        unwarped_mask = cv2.warpPerspective(mask, self.Minv, self.input_img.shape[1::-1])
         nonzero = unwarped_mask.nonzero()
         unwarped_fit = np.polyfit(nonzero[0], nonzero[1], 2)
         
@@ -522,11 +492,11 @@ class LaneDetector():
     def get_marked_lane(self):
         self.get_lane_fit()
 
-        # If there is no center fit detected, return the undistornted image
+        # If there is no center fit detected, return the original image
         if self.left_fit is None:
             assert(self.right_fit is None)
             self.num_miss += 1
-            return self.undist_img
+            return self.input_img
         
         yrange = np.linspace(0, self.warped_img.shape[0]-1, num=self.warped_img.shape[0])
         left_fitx = self.left_fit[0]*yrange**2 + self.left_fit[1]*yrange + self.left_fit[2]
@@ -541,20 +511,13 @@ class LaneDetector():
         cv2.polylines(lane_mask, [left_points], False, (255, 255, 0), thickness=20)
         cv2.polylines(lane_mask, [right_points], False, (255, 255, 0), thickness=20)
     
-        unwarped_lane_mask = cv2.warpPerspective(lane_mask, self.Minv, self.undist_img.shape[1::-1])
-        unwarped_img = cv2.addWeighted(self.undist_img, 1, unwarped_lane_mask, 0.3, 0)
+        unwarped_lane_mask = cv2.warpPerspective(lane_mask, self.Minv, self.input_img.shape[1::-1])
 
-        if self.debug == True:
-            color_lines = self.get_color_lines()
-            color_lines = cv2.resize(color_lines, (0,0), fx=0.15, fy=0.15) 
-            unwarped_img[:color_lines.shape[0], unwarped_img.shape[1]-color_lines.shape[1]:] = color_lines
-        
-        output = self.add_metrics(unwarped_img)
-        return output
+        return unwarped_lane_mask
 
     def process_frame(self, img):
-        self.undist_img = cv2.undistort(img, self.cam_mtx, self.dist_coeff, None, self.cam_mtx)
-        self.warped_img, self.Minv = self.get_warped_image(self.undist_img)
+        self.input_img = img
+        self.warped_img, self.Minv = self.get_warped_image(self.input_img)
         return self.get_marked_lane()
     
     def print_stats(self):
