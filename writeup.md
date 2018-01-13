@@ -65,19 +65,18 @@ More examples are present in output of the code cell 3 in notebook.
 
 I had experimented with HSV, HLS, YUV, LUV and YCrCb color spaces with different orientation and pixel_per_cell combinations and finally settled on following set of parameters which gave best test accuracy with SVM classifier:
 
-`
-# Parameters to extract features
-color_space = 'YCrCb'
-spatial_size=(16,16)
-hist_bins=32
-orient = 9
-pix_per_cell = 8
-cell_per_block = 2
-hog_channel = 'ALL'
-spatial_feature = True
-hist_feature = True
-hog_feature = True
-`
+| Parameter | Value
+|---|---
+| color_space  | 'YCrCb'
+| spatial_size | (16,16)
+| hist_bins | 32
+| orient | 9
+| pix_per_cell | 8
+| cell_per_block | 2
+| hog_channel | 'ALL'
+| spatial_feature | True
+| hist_feature | True
+| hog_feature | True
 
 #### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
@@ -127,7 +126,9 @@ The entire project video runs in leftmost lane with a barrier on its left side. 
 ### Video Implementation
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a link to output of my pipeline on [![project_video](http://img.youtube.com/vi/z_bSm2S1b2E/0.jpg)](http://www.youtube.com/watch?v=z_bSm2S1b2E)
+Below is the link to output of my pipeline on `project_video.mp4`
+
+[![project_video](http://img.youtube.com/vi/z_bSm2S1b2E/0.jpg)](http://www.youtube.com/watch?v=z_bSm2S1b2E)
 
 Note that the detection for white car starts of little late util camera starts seeing tail portion of the car, this could be attributed to lesser number of examples for similar white cars. I tried to augment dataset with Autti data, but my Ipython notebook sesson kept running out of memory after loading data for about 30 minutes. Also LinearSVM does not work with generators, it requires all the data points in memory.
 
